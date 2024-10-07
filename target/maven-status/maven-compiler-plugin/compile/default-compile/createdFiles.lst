@@ -1,0 +1,13 @@
+com/chessclientfx/model/ChessBoard.class
+com/chessclientfx/network/ClientSocket.class
+com/chessclientfx/ChessClientFX.class
+com/chessclientfx/controller/GameController.class
+com/chessclientfx/view/chess_view.class
+com/chessclientfx/view/connection_view.class
+com/chessclientfx/controller/HomeController.class
+com/chessclientfx/model/Player.class
+com/chessclientfx/model/Move.class
+com/chessclientfx/model/Game.class
+com/chessclientfx/controller/ConnectionController.class
+com/chessclientfx/controller/ChessController.class
+com/chessclientfx/network/Protocol.class

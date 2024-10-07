@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.chessclientfx.controller.HomeController" spacing="10" alignment="CENTER">
+    <children>
+        <Label text="Bienvenue sur ChessClientFX" />
+        <Label fx:id="usernameLabel" text="test"/>
+        <Button fx:id="createGameButton" text="Créer une partie" onAction="#handleCreateGameButton" />
+        <Button fx:id="getGamesButon" text="Voir les parties en cours" onAction="#handleViewGamesButton" />
+        <Button fx:id="logoutButton" text="Se déconnecter" onAction="#handleLogoutButton" />
+
+        <Label text="Liste des parties disponibles" />
+
+        <ListView fx:id="gameListView" prefHeight="300" prefWidth="400" />
+
+    </children>
+
+
+
+</VBox>
