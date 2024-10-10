@@ -17,4 +17,14 @@ public class Protocol {
     public static String formatConnect(String pseudo) {
         return String.format("%s;%s", CONNECT, pseudo);
     }
+
+    public static String formatCreateGame(String gameName) {
+        return String.format("%s;%s", CREATE_GAME, gameName);
+    }
+
+    public static String formatJoinGame(String gameId) {
+        return String.format("%s;%s", JOIN_GAME, gameId);
+    }
+
+
 }

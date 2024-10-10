@@ -1,6 +1,6 @@
 package com.chessclientfx.controller;
 
-import com.chessclientfx.model.Player;
+import com.chessclientfx.model.PlayerFX;
 import com.chessclientfx.network.ClientSocket;
 import com.chessclientfx.network.Protocol;
 import javafx.event.ActionEvent;
@@ -36,17 +36,15 @@ public class ConnectionController {
     public void handleConnectButton(ActionEvent event) throws Exception {
         String username = usernameField.getText();
         if (isValidUsername(username)) {
-            System.out.println("Pseudo valide : " + username);
             //connection au serveur multi thread
             String message = Protocol.formatConnect(username);
-            System.out.println("Envoi de : " + message);
             clientSocket.sendMessage(Protocol.formatConnect(username));
             System.out.println(clientSocket.receiveMessage());
             String response = clientSocket.receiveMessage();
             if (response.equals("OK")) {
                 System.out.println("Connexion réussie.");
-                Player player = new Player(username);
-                switchToGameView(player);
+                PlayerFX playerFX = new PlayerFX(username);
+                switchToGameView(playerFX);
 
             } else {
                 errorLabel.setText("Pseudo déjà utilisé. Veuillez réessayer.");
@@ -61,11 +59,11 @@ public class ConnectionController {
         return username != null && username.matches("^[a-zA-Z0-9]{1,20}$");
     }
 
-    private void switchToGameView(Player player) {
+    private void switchToGameView(PlayerFX playerFX) {
         try {
             // Charger la nouvelle vue
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/home_view.fxml"));
-            loader.setControllerFactory(param -> new HomeController(clientSocket, player));
+            loader.setControllerFactory(param -> new HomeController(clientSocket, playerFX));
             Parent homeRoot = loader.load();
 
 

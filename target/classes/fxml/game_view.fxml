@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.chessclientfx.controller.GameController" spacing="10" alignment="CENTER" >
+
+    <!-- Barre supérieure avec informations sur le jeu et boutons -->
+    <HBox spacing="10" alignment="CENTER">
+        <Label text="Partie: " />
+        <Label fx:id="gameIdLabel" text="ID" />
+        <Button fx:id="leaveGameButton" text="Quitter la partie" onAction="#handleLeaveGameButton" />
+    </HBox>
+
+    <!-- Zone pour afficher le plateau d'échecs -->
+    <Canvas fx:id="chessBoardCanvas" width="600" height="600" />
+
+    <!-- Informations sur le joueur -->
+    <HBox spacing="10" alignment="CENTER">
+        <Label text="Votre Tour: " />
+        <Label fx:id="currentTurnLabel" text="Blancs" />
+    </HBox>
+
+    <!-- Liste des mouvements précédents -->
+    <Label text="Historique des mouvements" />
+    <ListView fx:id="moveHistoryListView" prefHeight="200" />
+
+</VBox>

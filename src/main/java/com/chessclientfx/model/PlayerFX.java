@@ -1,6 +1,9 @@
 package com.chessclientfx.model;
 
-public class Player {
+
+import com.chessgame.model.Player;
+
+public class PlayerFX {
 
 
     private String pseudo;
@@ -11,7 +14,9 @@ public class Player {
 
     private Boolean inGame;
 
-    public Player(String pseudo){
+    private Player player;
+
+    public PlayerFX(String pseudo){
         this.pseudo = pseudo;
         this.inGame = false;
     }
@@ -35,5 +40,9 @@ public class Player {
 
     public Game getCurrentgame() {
         return Currentgame;
+    }
+
+    public void setCurrentGame(Game game) {
+        this.Currentgame = game;
     }
 }

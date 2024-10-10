@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" spacing="10.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.chessclientfx.controller.CreateGameController">    <children>
+        <Label text="Créer une partie" />
+        <TextField fx:id="gameNameField" promptText="Nom de la partie" />
+        <Button fx:id="createGameButton" text="Créer la partie" onAction="#handleCreateGameButton" />
+        <Label fx:id="errorLabel" textFill="red" />
+    </children>
+
+</VBox>

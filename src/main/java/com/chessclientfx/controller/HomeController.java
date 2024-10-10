@@ -1,14 +1,28 @@
 package com.chessclientfx.controller;
 
-import com.chessclientfx.model.Player;
+import com.chessclientfx.model.Game;
+import com.chessclientfx.model.PlayerFX;
+import com.chessclientfx.network.Protocol;
+
+import com.chessgame.model.ChessGame;
+import com.chessserver.server.GameSession;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import com.chessclientfx.network.ClientSocket;
+import javafx.stage.Stage;
+
+import java.util.HashMap;
+import java.util.List;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 public class HomeController {
 
@@ -31,24 +45,23 @@ public class HomeController {
 
     private ClientSocket clientSocket;
 
-    public Player player;
 
-    public HomeController(ClientSocket clientSocket, Player player) {
+    List<GameSession> gameslist;
+
+
+    ObservableList<String> games = FXCollections.observableArrayList();
+
+    public PlayerFX playerFX;
+
+    public HomeController(ClientSocket clientSocket, PlayerFX playerFX) {
         this.clientSocket = clientSocket;
-        this.player = player;
+        this.playerFX = playerFX;
     }
 
     @FXML
-    public void initialize() {
-        usernameLabel.setText("pseudo : " + player.getPseudo());
-        // Remplir la liste des parties avec des données mock pour le moment
-        ObservableList<String> games = FXCollections.observableArrayList(
-            "Partie 1 - 1 joueur",
-            "Partie 2 - 2 joueurs",
-            "Partie 3 - 1 joueur"
-        );
-        gameListView.setItems(games);
-
+    public void initialize() throws Exception {
+        usernameLabel.setText("pseudo : " + playerFX.getPseudo());
+        handleViewGamesButton();
         // Ajouter un écouteur pour les clics sur les parties
         gameListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -61,24 +74,95 @@ public class HomeController {
     @FXML
     private void handleCreateGameButton() {
         System.out.println("Création d'une nouvelle partie");
-        // Redirection vers la vue de création de partie (create_game_view)
+        switchToCreateGameView();
     }
 
     @FXML
     private void handleLogoutButton() {
-        System.out.println("Déconnexion");
-        // Logique pour déconnecter le client
+        clientSocket.sendMessage(Protocol.DISCONNECT);
+        Stage stage = (Stage) logoutButton.getScene().getWindow();
+        stage.close();
     }
 
     public void handleJoinGameButton(String game) {
-        System.out.println("Connexion à la partie : " + game);
-        // Logique pour se connecter à la partie sélectionnée
-        // Vérifier si la partie est pleine ou non, puis se connecter si possible
+
+        try {
+            // Envoi de la demande de connexion à la partie
+            clientSocket.sendMessage(Protocol.formatJoinGame(game));
+            String response = clientSocket.receiveMessage();
+            if (response.equals("OK")) {
+                response = clientSocket.receiveMessage();
+                Game currentGame = new Game(response);
+                playerFX.setCurrentGame(currentGame);
+                switchToGameView(currentGame);
+            } else {
+                errorLabel.setText(response);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
-    public void handleViewGamesButton(ActionEvent actionEvent) {
-        System.out.println("Affichage des parties disponibles");
-        // Logique pour demander la liste des parties disponibles au serveur
+    public void handleViewGamesButton() throws Exception {
+        System.out.println("Liste des parties demandée");
+        // Envoyer la requête pour lister les parties disponibles
+        clientSocket.sendMessage(Protocol.LIST_GAMES);
+        System.out.println("Liste des parties : ");
+        // Réutilisez le ObjectInputStream si possible
+        ObjectInputStream ois;
+        if (clientSocket.getInputStream() instanceof ObjectInputStream) {
+            ois = (ObjectInputStream) clientSocket.getInputStream();
+        } else {
+            ois = new ObjectInputStream(clientSocket.getInputStream());
+        }
+        gameslist = (List<GameSession>) ois.readObject();
+
+        for (GameSession game : gameslist) {
+            games.add(game.getId());
+        }
+
+        gameListView.setItems(games);
     }
+
+    private void switchToCreateGameView() {
+        try {
+            // Charger la nouvelle vue
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create_game_view.fxml"));
+            loader.setControllerFactory(param -> new CreateGameController(clientSocket, playerFX));
+            Parent homeRoot = loader.load();
+
+
+            // Obtenir la scène actuelle à partir du bouton
+            Stage stage = (Stage) createGameButton.getScene().getWindow();
+
+            // Remplacer la scène par la nouvelle vue
+            stage.setScene(new Scene(homeRoot));
+            stage.setTitle("Create Game");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void switchToGameView(Game game) throws IOException {
+        try {
+            // Charger la nouvelle vue
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
+            loader.setControllerFactory(param -> new GameController(game, clientSocket, playerFX));
+            Parent homeRoot = loader.load();
+
+            // Obtenir la scène actuelle à partir du bouton
+            Stage stage = (Stage) createGameButton.getScene().getWindow();
+
+            // Remplacer la scène par la nouvelle vue
+            stage.setScene(new Scene(homeRoot));
+            stage.setTitle("Chess Game - " + game.getId());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

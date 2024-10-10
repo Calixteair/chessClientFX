@@ -9,5 +9,8 @@
         <module name="chessClientFX" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="chess-game" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

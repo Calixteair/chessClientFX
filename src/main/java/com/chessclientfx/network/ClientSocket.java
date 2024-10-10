@@ -27,5 +27,9 @@ public class ClientSocket {
         input.close();
         output.close();
     }
+
+    public InputStream getInputStream() throws IOException {
+        return socket.getInputStream();
+    }
 }
 
