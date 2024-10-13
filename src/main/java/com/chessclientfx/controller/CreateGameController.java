@@ -1,6 +1,5 @@
 package com.chessclientfx.controller;
 
-import com.chessclientfx.model.Game;
 import com.chessclientfx.model.PlayerFX;
 import com.chessclientfx.network.ClientSocket;
 import com.chessclientfx.network.Protocol;
@@ -33,14 +32,17 @@ public class CreateGameController {
     public void handleCreateGameButton()  throws Exception {
         String gameName = gameNameField.getText();
         if (isValidGameName(gameName)) {
-            // Envoi de la demande de création de partie
             clientSocket.sendMessage(Protocol.formatCreateGame(gameName));
             String response = clientSocket.receiveMessage();
             if (response.equals("OK")) {
                 response = clientSocket.receiveMessage();
-                Game game = new Game(response, gameName);
-                this.playerFX.setCurrentGame(game);
-                switchToGameView(game);
+                System.out.println(response);
+                String uuid = response;
+                System.out.println("test1");
+                response = clientSocket.receiveMessage();
+                System.out.println(response);
+                System.out.println("test2");
+                switchToGameView(uuid);
             } else {
                 System.out.println(response);
                 errorLabel.setText("Nom de partie déjà utilisé. Veuillez réessayer.");
@@ -55,10 +57,10 @@ public class CreateGameController {
         return gameName != null && gameName.matches("^[a-zA-Z0-9]{1,20}$");
     }
 
-    public void switchToGameView(Game game) throws Exception {
+    public void switchToGameView(String uuid) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
         Stage stage = (Stage) createGameButton.getScene().getWindow();
-        GameController controller = new GameController(game, clientSocket, playerFX);
+        GameController controller = new GameController(clientSocket, playerFX ,uuid);
         loader.setControllerFactory(param -> controller);
         stage.setScene(new Scene(loader.load()));
         stage.setTitle("Chess Game - " + gameNameField.getText());

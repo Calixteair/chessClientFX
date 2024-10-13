@@ -1,14 +1,11 @@
 package com.chessclientfx.controller;
 
-import com.chessclientfx.model.Game;
 import com.chessclientfx.model.PlayerFX;
 import com.chessclientfx.network.Protocol;
 
-import com.chessgame.model.ChessGame;
 import com.chessserver.server.GameSession;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,7 +16,6 @@ import javafx.scene.control.ListView;
 import com.chessclientfx.network.ClientSocket;
 import javafx.stage.Stage;
 
-import java.util.HashMap;
 import java.util.List;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -92,9 +88,8 @@ public class HomeController {
             String response = clientSocket.receiveMessage();
             if (response.equals("OK")) {
                 response = clientSocket.receiveMessage();
-                Game currentGame = new Game(response);
-                playerFX.setCurrentGame(currentGame);
-                switchToGameView(currentGame);
+                System.out.println("rep before siwtch" + response);
+                switchToGameView(game);
             } else {
                 errorLabel.setText(response);
             }
@@ -108,7 +103,6 @@ public class HomeController {
         System.out.println("Liste des parties demandée");
         // Envoyer la requête pour lister les parties disponibles
         clientSocket.sendMessage(Protocol.LIST_GAMES);
-        System.out.println("Liste des parties : ");
         // Réutilisez le ObjectInputStream si possible
         ObjectInputStream ois;
         if (clientSocket.getInputStream() instanceof ObjectInputStream) {
@@ -129,6 +123,7 @@ public class HomeController {
         try {
             // Charger la nouvelle vue
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create_game_view.fxml"));
+            playerFX.isWhite = true;
             loader.setControllerFactory(param -> new CreateGameController(clientSocket, playerFX));
             Parent homeRoot = loader.load();
 
@@ -145,11 +140,12 @@ public class HomeController {
         }
     }
 
-    private void switchToGameView(Game game) throws IOException {
+    private void switchToGameView(String gameSessionId) throws IOException {
         try {
             // Charger la nouvelle vue
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
-            loader.setControllerFactory(param -> new GameController(game, clientSocket, playerFX));
+            playerFX.isWhite = false;
+            loader.setControllerFactory(param -> new GameController(clientSocket, playerFX, gameSessionId));
             Parent homeRoot = loader.load();
 
             // Obtenir la scène actuelle à partir du bouton
@@ -157,7 +153,7 @@ public class HomeController {
 
             // Remplacer la scène par la nouvelle vue
             stage.setScene(new Scene(homeRoot));
-            stage.setTitle("Chess Game - " + game.getId());
+            stage.setTitle("Chess Game - ");
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,12 +1,11 @@
 com/chessclientfx/network/ClientSocket.class
 com/chessclientfx/ChessClientFX.class
+com/chessclientfx/view/connection_view.class
+com/chessclientfx/utils/JoinGameParser.class
+com/chessclientfx/controller/ConnectionController.class
+com/chessclientfx/network/Protocol.class
 com/chessclientfx/controller/GameController.class
 com/chessclientfx/view/chess_view.class
-com/chessclientfx/view/connection_view.class
 com/chessclientfx/controller/HomeController.class
-com/chessclientfx/model/GameList.class
-com/chessclientfx/model/Game.class
 com/chessclientfx/controller/CreateGameController.class
-com/chessclientfx/controller/ConnectionController.class
 com/chessclientfx/model/PlayerFX.class
-com/chessclientfx/network/Protocol.class

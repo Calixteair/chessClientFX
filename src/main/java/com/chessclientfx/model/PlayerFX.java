@@ -10,17 +10,20 @@ public class PlayerFX {
 
     private String password;
 
-    private Game Currentgame;
-
     private Boolean inGame;
 
-    private Player player;
+    public Player player;
+
+    public boolean isWhite;
 
     public PlayerFX(String pseudo){
         this.pseudo = pseudo;
         this.inGame = false;
     }
 
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
 
     public String getPseudo() {
         return pseudo;
@@ -38,11 +41,4 @@ public class PlayerFX {
         this.password = password;
     }
 
-    public Game getCurrentgame() {
-        return Currentgame;
-    }
-
-    public void setCurrentGame(Game game) {
-        this.Currentgame = game;
-    }
 }
