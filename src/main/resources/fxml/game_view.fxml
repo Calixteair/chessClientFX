@@ -18,6 +18,9 @@
     <!-- Label pour l'attente d'un joueur -->
     <Label fx:id="waitingLabel" text="En attente d'un joueur..." visible="false" />
 
+    <!--columns name -->
+    <Canvas fx:id="columnsCanvas" width="600" height="50" visible="false" />
+
     <!-- Zone pour afficher le plateau d'échecs -->
     <Canvas fx:id="chessBoardCanvas" width="600" height="600" visible="false" />
 
@@ -30,5 +33,7 @@
     <!-- Liste des mouvements précédents -->
     <Label text="Historique des mouvements" visible="false" />
     <ListView fx:id="moveHistoryListView" prefHeight="200" visible="false" />
+
+     <Label fx:id="errorLabel" textFill="red" />
 
 </VBox>

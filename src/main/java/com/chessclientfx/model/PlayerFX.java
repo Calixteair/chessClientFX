@@ -16,6 +16,8 @@ public class PlayerFX {
 
     public boolean isWhite;
 
+    public boolean myTurn = false;
+
     public PlayerFX(String pseudo){
         this.pseudo = pseudo;
         this.inGame = false;
@@ -40,5 +42,7 @@ public class PlayerFX {
     public void setPassword(String password) {
         this.password = password;
     }
+
+
 
 }
