@@ -1,32 +1,56 @@
 package com.chessclientfx;
 
-import com.chessclientfx.controller.ConnectionController;
-import com.chessclientfx.network.ClientSocket;
+import com.chessclientfx.network.ServerConnection;
+import com.chessclientfx.view.Screens;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
-import java.util.Objects;
+import java.io.IOException;
 
+/**
+ * Client JavaFX. Serveur : variables CHESS_HOST (localhost) et CHESS_TCP_PORT (8090),
+ * ou arguments --host=… --port=…
+ */
 public class ChessClientFX extends Application {
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        System.out.println("Chess Client FX");
-        System.out.println();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/connection_view.fxml"));
-        primaryStage.setTitle("Chess Game - Connection");
-        ClientSocket clientSocket = new ClientSocket("localhost", 8090);
-        ConnectionController controller = new ConnectionController(clientSocket);
-        loader.setControllerFactory(param -> controller);
-        Parent root = loader.load();
-        //connection au serveur multi thread
+    private ServerConnection connection;
 
-        System.out.println("Client connected to server");
-        primaryStage.setScene(new Scene(root));
-        primaryStage.show();
+    @Override
+    public void start(Stage stage) {
+        String host = option("host", "CHESS_HOST", "localhost");
+        String port = option("port", "CHESS_TCP_PORT", "8090");
+        try {
+            connection = new ServerConnection(host, Integer.parseInt(port));
+        } catch (IOException | NumberFormatException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR,
+                    "Impossible de joindre le serveur " + host + ":" + port + ".\nLancez d'abord chessServer.");
+            alert.setHeaderText("Serveur injoignable");
+            alert.showAndWait();
+            Platform.exit();
+            return;
+        }
+        stage.setMinWidth(760);
+        stage.setMinHeight(640);
+        new Screens(stage, connection).showConnection();
+        stage.show();
+    }
+
+    private String option(String name, String envVariable, String fallback) {
+        String fromArgs = getParameters().getNamed().get(name);
+        if (fromArgs != null) {
+            return fromArgs;
+        }
+        String fromEnv = System.getenv(envVariable);
+        return fromEnv == null || fromEnv.isBlank() ? fallback : fromEnv;
+    }
+
+    @Override
+    public void stop() {
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     public static void main(String[] args) {

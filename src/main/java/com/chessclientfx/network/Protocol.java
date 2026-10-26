@@ -1,38 +1,47 @@
 package com.chessclientfx.network;
 
+/**
+ * Commandes du protocole texte du serveur (voir chessServer : network/Protocol.java).
+ * Un message = une ligne, champs séparés par ';'.
+ */
+public final class Protocol {
 
-public class Protocol {
+    public static final String WELCOME = "WELCOME";
+    public static final String GAMES = "GAMES";
+    public static final String GAME_CREATED = "GAME_CREATED";
+    public static final String GAME_START = "GAME_START";
+    public static final String STATE = "STATE";
+    public static final String OPPONENT_LEFT = "OPPONENT_LEFT";
+    public static final String ERROR = "ERROR";
 
-    // --- Commandes envoyées par le client ---
-
-    public static final String CONNECT = "CONNECT";          // Connexion au serveur avec un pseudo
-    public static final String CREATE_GAME = "CREATE_GAME";  // Création d'une nouvelle partie
-    public static final String JOIN_GAME = "JOIN_GAME";      // Rejoindre une partie existante
-    public static final String MOVE_PIECE = "MOVE_PIECE";    // Déplacer une pièce
-    public static final String LIST_GAMES = "LIST_GAMES";    // Demander la liste des parties disponibles
-    public static final String LEAVE_GAME = "LEAVE_GAME";    // Quitter une partie
-    public static final String DISCONNECT = "DISCONNECT";    // Déconnexion du serveur
-
-
-    public static String formatConnect(String pseudo) {
-        return String.format("%s;%s", CONNECT, pseudo);
+    private Protocol() {
     }
 
-    public static String formatCreateGame(String gameName) {
-        return String.format("%s;%s", CREATE_GAME, gameName);
+    public static String connect(String pseudo) {
+        return "CONNECT;" + pseudo;
     }
 
-    public static String formatJoinGame(String gameId) {
-        return String.format("%s;%s", JOIN_GAME, gameId);
+    public static String createGame(String name) {
+        return "CREATE_GAME;" + name;
     }
 
-    public static String formatMovePiece(int sourceX, int sourceY, int destX, int destY) {
-        return String.format("%s;%d;%d;%d;%d", MOVE_PIECE, sourceX, sourceY, destX, destY);
+    public static String joinGame(String id) {
+        return "JOIN_GAME;" + id;
     }
 
-    public static String formatMovePiece(int sourceX, int sourceY, int destX, int destY, boolean pawnDash) {
-        return String.format("%s;%d;%d;%d;%d;%b", MOVE_PIECE, sourceX, sourceY, destX, destY, pawnDash);
+    public static String move(String uci) {
+        return "MOVE;" + uci;
     }
 
+    public static String resign() {
+        return "RESIGN";
+    }
 
+    public static String leaveGame() {
+        return "LEAVE_GAME";
+    }
+
+    public static String disconnect() {
+        return "DISCONNECT";
+    }
 }

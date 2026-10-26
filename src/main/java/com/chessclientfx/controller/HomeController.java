@@ -1,182 +1,133 @@
 package com.chessclientfx.controller;
 
-import com.chessclientfx.model.PlayerFX;
+import com.chessclientfx.model.GameInfo;
 import com.chessclientfx.network.Protocol;
-
-import com.chessserver.server.GameSession;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import com.chessclientfx.network.ServerConnection;
+import com.chessclientfx.network.ServerMessage;
+import com.chessclientfx.view.Screens;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import com.chessclientfx.network.ClientSocket;
-import javafx.stage.Stage;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.Objects;
-
+/**
+ * Salon : liste des parties en attente (mise à jour par le serveur), création d'une partie.
+ */
 public class HomeController {
 
-    @FXML
-    private ListView<String> gameListView;
-    @FXML
-    private Button createGameButton;
+    /** Partie en attente : GAMES;id,nom,créateur|… */
+    public record LobbyGame(String id, String name, String creator) {
+    }
 
-    @FXML
-    private Button viewGamesButton;
-
-    @FXML
-    private Button logoutButton;
-
-    @FXML
-    private Label errorLabel;
+    private final ServerConnection connection;
+    private final Screens screens;
+    private final String pseudo;
 
     @FXML
     private Label usernameLabel;
+    @FXML
+    private TextField gameNameField;
+    @FXML
+    private Button createGameButton;
+    @FXML
+    private ListView<LobbyGame> gameListView;
+    @FXML
+    private Button joinButton;
+    @FXML
+    private Label emptyLabel;
+    @FXML
+    private VBox lobbyBox;
+    @FXML
+    private VBox waitingBox;
+    @FXML
+    private Label waitingLabel;
+    @FXML
+    private Label errorLabel;
 
-    private ClientSocket clientSocket;
-
-
-    List<GameSession> gameslist;
-
-    HashMap<String,String> listegame = new HashMap<>();
-
-
-    ObservableList<String> games = FXCollections.observableArrayList();
-
-    public PlayerFX playerFX;
-
-    public HomeController(ClientSocket clientSocket, PlayerFX playerFX) {
-        this.clientSocket = clientSocket;
-        this.playerFX = playerFX;
+    public HomeController(ServerConnection connection, Screens screens, String pseudo) {
+        this.connection = connection;
+        this.screens = screens;
+        this.pseudo = pseudo;
     }
 
     @FXML
-    public void initialize() throws Exception {
-        usernameLabel.setText("pseudo : " + playerFX.getPseudo());
-        handleViewGamesButton();
-        // Ajouter un écouteur pour les clics sur les parties
-        gameListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                handleJoinGameButton(newValue);
+    public void initialize() {
+        usernameLabel.setText("Bonjour " + pseudo);
+        gameNameField.setText((pseudo.matches("(?i)[aeiouyh].*") ? "Partie d'" : "Partie de ") + pseudo);
+        gameListView.setCellFactory(list -> new GameCell());
+        joinButton.disableProperty().bind(gameListView.getSelectionModel().selectedItemProperty().isNull());
+        gameListView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                handleJoinButton();
             }
         });
+        showWaiting(null);
+        connection.setListener(this::onMessage);
+        connection.send("LIST_GAMES");
     }
 
-
-    @FXML
-    private void handleCreateGameButton() {
-        System.out.println("Création d'une nouvelle partie");
-        switchToCreateGameView();
-    }
-
-    @FXML
-    private void handleLogoutButton() {
-        clientSocket.sendMessage(Protocol.DISCONNECT);
-        Stage stage = (Stage) logoutButton.getScene().getWindow();
-        stage.close();
-    }
-
-    public void handleJoinGameButton(String game) {
-
-        try {
-            // Envoi de la demande de connexion à la partie
-            clientSocket.sendMessage(Protocol.formatJoinGame(findGameId(game)));
-            String response = clientSocket.receiveMessage();
-            if (response.equals("OK")) {
-                response = clientSocket.receiveMessage();
-                System.out.println("rep before siwtch" + response);
-                switchToGameView(game);
-            } else {
-                errorLabel.setText(response);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void onMessage(ServerMessage message) {
+        switch (message.type()) {
+            case Protocol.GAMES -> showGames(message.field(0));
+            case Protocol.GAME_CREATED -> showWaiting(message.field(1));
+            case Protocol.GAME_START -> screens.showGame(pseudo, GameInfo.from(message));
+            case Protocol.ERROR -> errorLabel.setText(message.errorText());
+            default -> { }
         }
-
     }
 
-    public String findGameId(String gameName){
-        for (String key : listegame.keySet()) {
-            if (listegame.get(key).equals(gameName)) {
-                return key;
+    private void showGames(String field) {
+        gameListView.getItems().clear();
+        if (!field.isBlank()) {
+            for (String entry : field.split("\\|")) {
+                String[] parts = entry.split(",");
+                if (parts.length == 3) {
+                    gameListView.getItems().add(new LobbyGame(parts[0], parts[1], parts[2]));
+                }
             }
         }
-        return null;
+        emptyLabel.setVisible(gameListView.getItems().isEmpty());
     }
 
-    public void handleViewGamesButton() throws Exception {
-        System.out.println("Liste des parties demandée");
-        // Envoyer la requête pour lister les parties disponibles
-        clientSocket.sendMessage(Protocol.LIST_GAMES);
-        // Réutilisez le ObjectInputStream si possible
-        ObjectInputStream ois;
-        if (clientSocket.getInputStream() instanceof ObjectInputStream) {
-            ois = (ObjectInputStream) clientSocket.getInputStream();
-        } else {
-            ois = new ObjectInputStream(clientSocket.getInputStream());
-        }
-        Object test = ois.readObject();
-        System.out.println(test);
-        System.out.println(test.getClass());
-        gameslist = (ArrayList<GameSession>) test;
-
-        for (GameSession game : gameslist) {
-            games.add(String.valueOf(game));
-            listegame.put(game.getId(),String.valueOf(game));
-        }
-
-        gameListView.setItems(games);
-    }
-
-    private void switchToCreateGameView() {
-        try {
-            // Charger la nouvelle vue
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create_game_view.fxml"));
-            playerFX.isWhite = true;
-            loader.setControllerFactory(param -> new CreateGameController(clientSocket, playerFX));
-            Parent homeRoot = loader.load();
-
-
-            // Obtenir la scène actuelle à partir du bouton
-            Stage stage = (Stage) createGameButton.getScene().getWindow();
-
-            // Remplacer la scène par la nouvelle vue
-            stage.setScene(new Scene(homeRoot));
-            stage.setTitle("Create Game");
-
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void showWaiting(String gameName) {
+        boolean waiting = gameName != null;
+        waitingBox.setVisible(waiting);
+        waitingBox.setManaged(waiting);
+        lobbyBox.setDisable(waiting);
+        if (waiting) {
+            waitingLabel.setText("« " + gameName + " » attend un adversaire…");
         }
     }
 
-    private void switchToGameView(String gameSessionId) throws IOException {
-        try {
-            // Charger la nouvelle vue
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
-            playerFX.isWhite = false;
-            loader.setControllerFactory(param -> new GameController(clientSocket, playerFX, gameSessionId,true));
-            Parent homeRoot = loader.load();
+    @FXML
+    public void handleCreateGameButton() {
+        errorLabel.setText("");
+        connection.send(Protocol.createGame(gameNameField.getText().trim()));
+    }
 
-            // Obtenir la scène actuelle à partir du bouton
-            Stage stage = (Stage) createGameButton.getScene().getWindow();
-
-            // Remplacer la scène par la nouvelle vue
-            stage.setScene(new Scene(homeRoot));
-            stage.setTitle("Chess Game - ");
-
-        } catch (IOException e) {
-            e.printStackTrace();
+    @FXML
+    public void handleJoinButton() {
+        LobbyGame game = gameListView.getSelectionModel().getSelectedItem();
+        if (game != null && !game.creator().equals(pseudo)) {
+            errorLabel.setText("");
+            connection.send(Protocol.joinGame(game.id()));
         }
     }
 
+    @FXML
+    public void handleCancelButton() {
+        connection.send(Protocol.leaveGame());
+        showWaiting(null);
+    }
 
+    private static final class GameCell extends ListCell<LobbyGame> {
+        @Override
+        protected void updateItem(LobbyGame game, boolean empty) {
+            super.updateItem(game, empty);
+            setText(empty || game == null ? null : game.name() + "   ·   proposée par " + game.creator());
+        }
+    }
 }

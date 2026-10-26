@@ -1,0 +1,173 @@
+/* Même palette que le client web : papier chaud, encre bleu-noir, accent bleu stylo-bille. */
+.root {
+    -paper: #f6f2ea;
+    -paper-raised: #fbf9f5;
+    -rule: #ddd4c4;
+    -rule-strong: #b9ae9b;
+    -ink: #1d2433;
+    -ink-soft: #4a5165;
+    -ink-faint: #6b7183;
+    -accent: #2446b8;
+    -accent-hover: #1c3a9e;
+    -danger: #c23a2c;
+
+    -fx-background-color: -paper;
+    -fx-font-family: "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: -ink;
+}
+
+.label {
+    -fx-text-fill: -ink;
+}
+
+.eyebrow {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -ink-faint;
+}
+
+.title-xl {
+    -fx-font-family: "Literata", "Georgia", serif;
+    -fx-font-size: 44px;
+    -fx-font-weight: bold;
+}
+
+.title-md {
+    -fx-font-family: "Literata", "Georgia", serif;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.lede {
+    -fx-text-fill: -ink-soft;
+    -fx-font-size: 15px;
+}
+
+.field-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -ink-soft;
+}
+
+.hint {
+    -fx-font-size: 12px;
+    -fx-text-fill: -ink-faint;
+}
+
+.error {
+    -fx-text-fill: -danger;
+}
+
+.text-field {
+    -fx-background-color: -rule-strong, -paper-raised;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 4, 3;
+    -fx-padding: 9 12;
+}
+
+.text-field:focused {
+    -fx-background-color: -accent, -paper-raised;
+    -fx-background-insets: 0, 2;
+}
+
+.button {
+    -fx-background-radius: 4;
+    -fx-padding: 9 16;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.button.primary {
+    -fx-background-color: -accent;
+    -fx-text-fill: #fbf9f5;
+}
+
+.button.primary:hover {
+    -fx-background-color: -accent-hover;
+}
+
+.button.quiet {
+    -fx-background-color: -rule-strong, -paper;
+    -fx-background-insets: 0, 1;
+    -fx-text-fill: -ink;
+}
+
+.button.quiet:hover {
+    -fx-background-color: -rule-strong, #ece6db;
+}
+
+.button:focused {
+    -fx-border-color: -accent;
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-border-insets: -3;
+}
+
+.list-view {
+    -fx-background-color: -rule-strong, -paper-raised;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 4;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -rule transparent;
+    -fx-padding: 10 12;
+    -fx-text-fill: -ink;
+}
+
+.list-cell:empty {
+    -fx-border-color: transparent;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: #e3e7f5;
+    -fx-text-fill: -accent;
+}
+
+.register .list-cell {
+    -fx-font-family: "Literata", "Georgia", serif;
+    -fx-font-size: 16px;
+}
+
+.sheet .list-cell {
+    -fx-font-family: "Literata", "Georgia", serif;
+    -fx-font-size: 15px;
+}
+
+.empty {
+    -fx-text-fill: -ink-faint;
+    -fx-font-style: italic;
+}
+
+.player {
+    -fx-font-family: "Literata", "Georgia", serif;
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+}
+
+.status-box {
+    -fx-border-color: -rule transparent -rule transparent;
+    -fx-padding: 12 0;
+}
+
+.status {
+    -fx-font-family: "Literata", "Georgia", serif;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.status.check {
+    -fx-text-fill: -danger;
+}
+
+.waiting {
+    -fx-border-color: -ink;
+    -fx-border-width: 2;
+    -fx-border-radius: 4;
+    -fx-padding: 14;
+}
+
+.board-frame {
+    -fx-effect: dropshadow(gaussian, rgba(29, 36, 51, 0.35), 24, 0.1, 0, 10);
+}

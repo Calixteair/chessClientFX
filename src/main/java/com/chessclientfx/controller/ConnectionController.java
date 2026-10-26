@@ -1,81 +1,60 @@
 package com.chessclientfx.controller;
 
-import com.chessclientfx.model.PlayerFX;
-import com.chessclientfx.network.ClientSocket;
 import com.chessclientfx.network.Protocol;
-import javafx.event.ActionEvent;
+import com.chessclientfx.network.ServerConnection;
+import com.chessclientfx.network.ServerMessage;
+import com.chessclientfx.view.Screens;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
-import javafx.stage.Stage;
+import javafx.scene.control.TextField;
 
-import java.io.IOException;
-
+/**
+ * Écran d'accueil : choix du pseudo.
+ */
 public class ConnectionController {
 
-    private ClientSocket clientSocket;
+    private static final String PSEUDO_PATTERN = "[A-Za-z0-9_-]{1,20}";
+
+    private final ServerConnection connection;
+    private final Screens screens;
+    private String requested;
 
     @FXML
     private TextField usernameField;
-
+    @FXML
+    private Button connectButton;
     @FXML
     private Label errorLabel;
 
-    @FXML
-    private Button connectButton;
-
-    public ConnectionController(ClientSocket clientSocket) {
-        this.clientSocket = clientSocket;
+    public ConnectionController(ServerConnection connection, Screens screens) {
+        this.connection = connection;
+        this.screens = screens;
     }
 
     @FXML
-    public void handleConnectButton(ActionEvent event) throws Exception {
-        String username = usernameField.getText();
-        if (isValidUsername(username)) {
-            //connection au serveur multi thread
-            String message = Protocol.formatConnect(username);
-            clientSocket.sendMessage(Protocol.formatConnect(username));
-            System.out.println(clientSocket.receiveMessage());
-            String response = clientSocket.receiveMessage();
-            if (response.equals("OK")) {
-                System.out.println("Connexion réussie.");
-                PlayerFX playerFX = new PlayerFX(username);
-                switchToGameView(playerFX);
+    public void initialize() {
+        connection.setListener(this::onMessage);
+    }
 
-            } else {
-                errorLabel.setText("Pseudo déjà utilisé. Veuillez réessayer.");
-            }
-
-        } else {
-            errorLabel.setText("Pseudo invalide. Veuillez réessayer.");
+    @FXML
+    public void handleConnectButton() {
+        String pseudo = usernameField.getText().trim();
+        if (!pseudo.matches(PSEUDO_PATTERN)) {
+            errorLabel.setText("Pseudo : 1 à 20 caractères parmi lettres, chiffres, _ et -");
+            return;
         }
+        requested = pseudo;
+        connectButton.setDisable(true);
+        connection.send(Protocol.connect(pseudo));
     }
 
-    private boolean isValidUsername(String username) {
-        return username != null && username.matches("^[a-zA-Z0-9]{1,20}$");
-    }
-
-    private void switchToGameView(PlayerFX playerFX) {
-        try {
-            // Charger la nouvelle vue
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/home_view.fxml"));
-            loader.setControllerFactory(param -> new HomeController(clientSocket, playerFX));
-            Parent homeRoot = loader.load();
-
-
-            // Obtenir la scène actuelle à partir du bouton
-            Stage stage = (Stage) connectButton.getScene().getWindow();
-
-            // Remplacer la scène par la nouvelle vue
-            stage.setScene(new Scene(homeRoot));
-            stage.setTitle("Chess Game");
-
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void onMessage(ServerMessage message) {
+        if (message.is(Protocol.WELCOME)) {
+            screens.showHome(message.field(0));
+        } else if (message.is(Protocol.ERROR) && requested != null) {
+            errorLabel.setText(message.errorText());
+            connectButton.setDisable(false);
         }
     }
 }

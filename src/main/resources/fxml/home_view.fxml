@@ -1,24 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.chessclientfx.controller.HomeController" spacing="10" alignment="CENTER">
-    <children>
-        <Label text="Bienvenue sur ChessClientFX" />
-        <Label fx:id="usernameLabel" text="test"/>
-        <Button fx:id="createGameButton" text="Créer une partie" onAction="#handleCreateGameButton" />
-        <Button fx:id="getGamesButon" text="Voir les parties en cours" onAction="#handleViewGamesButton" />
-        <Button fx:id="logoutButton" text="Se déconnecter" onAction="#handleLogoutButton" />
+<HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      styleClass="screen" spacing="56" prefWidth="960" prefHeight="640">
+    <padding><Insets top="48" right="56" bottom="48" left="56"/></padding>
 
-        <Label text="Liste des parties disponibles" />
+    <VBox spacing="12" prefWidth="340" minWidth="300">
+        <Label fx:id="usernameLabel" styleClass="eyebrow"/>
+        <Label text="Le salon" styleClass="title-xl"/>
+        <Label wrapText="true" styleClass="lede"
+               text="Proposez une partie ou rejoignez quelqu'un qui attend. La liste se met à jour toute seule."/>
+        <VBox fx:id="lobbyBox" spacing="8">
+            <VBox.margin><Insets top="18"/></VBox.margin>
+            <Label text="Nom de la partie" styleClass="field-label"/>
+            <HBox spacing="8">
+                <TextField fx:id="gameNameField" HBox.hgrow="ALWAYS" onAction="#handleCreateGameButton"/>
+                <Button fx:id="createGameButton" text="Créer la partie" styleClass="primary"
+                        onAction="#handleCreateGameButton"/>
+            </HBox>
+            <Label text="Vous aurez les blancs." styleClass="hint"/>
+        </VBox>
+        <VBox fx:id="waitingBox" spacing="10" styleClass="waiting">
+            <Label fx:id="waitingLabel" styleClass="status" wrapText="true"/>
+            <Label wrapText="true" styleClass="hint"
+                   text="La partie commence dès qu'un joueur la rejoint, ici ou sur le web."/>
+            <Button text="Annuler la partie" styleClass="quiet" onAction="#handleCancelButton"/>
+        </VBox>
+        <Label fx:id="errorLabel" styleClass="error" wrapText="true"/>
+    </VBox>
 
-        <ListView fx:id="gameListView" prefHeight="300" prefWidth="400" />
-
-    </children>
-
-
-
-</VBox>
+    <VBox spacing="10" HBox.hgrow="ALWAYS">
+        <Label text="Parties en attente" styleClass="title-md"/>
+        <StackPane VBox.vgrow="ALWAYS">
+            <ListView fx:id="gameListView" styleClass="register"/>
+            <Label fx:id="emptyLabel" wrapText="true" styleClass="empty" maxWidth="320"
+                   text="Personne n'attend pour l'instant. Créez une partie : elle apparaîtra ici et sur le web."/>
+        </StackPane>
+        <Button fx:id="joinButton" text="Rejoindre la partie sélectionnée" styleClass="quiet"
+                onAction="#handleJoinButton"/>
+    </VBox>
+</HBox>
