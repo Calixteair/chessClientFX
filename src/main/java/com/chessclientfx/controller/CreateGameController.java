@@ -60,7 +60,7 @@ public class CreateGameController {
     public void switchToGameView(String uuid) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
         Stage stage = (Stage) createGameButton.getScene().getWindow();
-        GameController controller = new GameController(clientSocket, playerFX ,uuid);
+        GameController controller = new GameController(clientSocket, playerFX ,uuid, false);
         loader.setControllerFactory(param -> controller);
         stage.setScene(new Scene(loader.load()));
         stage.setTitle("Chess Game - " + gameNameField.getText());

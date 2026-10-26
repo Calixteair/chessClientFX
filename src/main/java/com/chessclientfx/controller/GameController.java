@@ -3,6 +3,7 @@ package com.chessclientfx.controller;
 
 import com.chessclientfx.model.PlayerFX;
 import com.chessclientfx.network.ClientSocket;
+import com.chessclientfx.network.Protocol;
 import com.chessgame.controller.ChessGameController;
 import com.chessgame.model.ChessGame;
 import com.chessgame.model.Player;
@@ -26,6 +27,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.text.Font;
 
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -71,12 +73,15 @@ public class GameController {
 
     private boolean pieceSelected = false;
     private Piece pieceSelectedP;
+    private int rowStart;
+    private int colStart;
 
-    public GameController( ClientSocket clientSocket, PlayerFX playerFX,String uuidGameSession) {
+    public GameController( ClientSocket clientSocket, PlayerFX playerFX,String uuidGameSession, boolean gameIsStarted) {
         this.moveHistory = FXCollections.observableArrayList();
         this.clientSocket = clientSocket;
         this.playerFX = playerFX;
         this.uuidGameSession = uuidGameSession;
+        this.gameIsStarted = gameIsStarted;
 
         loadPieceImages();
     }
@@ -93,13 +98,15 @@ public class GameController {
                 playerFX.myTurn = true;
                 initTurn();
             } else {
+                System.out.println("noir");
                 this.chessController = new ChessGameController( "Adversaire",playerFX.getPseudo());
+                waitMyTurn();
             }
             startGameUI();
         }
     }
 
-    private void waitForOpponent() throws IOException {
+    private void waitForOpponent(){
         // Logique pour attendre que l'adversaire rejoigne la partie
         // Tu devrais probablement utiliser `clientSocket` pour recevoir des messages du serveur
         waitingLabel.setVisible(true);
@@ -121,6 +128,7 @@ public class GameController {
                         initTurn();
                     } else {
                         this.chessController = new ChessGameController("Adversaire", playerFX.getPseudo());
+                        waitMyTurn();
                     }
                     System.out.println("La partie a commencé");
                     // Mettre à jour l'interface utilisateur sur le thread de l'application
@@ -141,7 +149,7 @@ public class GameController {
         );
     }
 
-    private void startGameUI() {
+    private void startGameUI(){
         waitingLabel.setVisible(false);
         columnsCanvas.setVisible(true);
         chessBoardCanvas.setVisible(true);
@@ -169,7 +177,8 @@ public class GameController {
 
     }
 
-    private void initializeChessBoard() {
+
+    private void initializeChessBoard(){
         GraphicsContext cgc = columnsCanvas.getGraphicsContext2D();
         drawColumnsName(cgc);
         GraphicsContext gc = chessBoardCanvas.getGraphicsContext2D();
@@ -180,6 +189,7 @@ public class GameController {
 
         // Ajouter un écouteur pour les clics sur le plateau
         chessBoardCanvas.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleChessBoardClick);
+
     }
 
     private void drawColumnsName(GraphicsContext cgc) {
@@ -261,7 +271,12 @@ public class GameController {
         } else if (piece instanceof Knight) {
             pieceImage = piece.isWhite() ? whiteKnight : blackKnight;
         } else if (piece instanceof Pawn) {
-            pieceImage = piece.isWhite() ? whitePawn : blackPawn;
+            if ( piece instanceof Decoy){
+                //mettre l'image du pions mais en rouge
+                pieceImage = piece.isWhite() ? whitePawn : blackPawn;
+            } else {
+                 pieceImage = piece.isWhite() ? whitePawn : blackPawn;
+            }
         }
 
         // Dessiner l'image de la pièce sur le canvas
@@ -273,18 +288,19 @@ public class GameController {
     private void chosePiece(MouseEvent event){
         int row = (int) (event.getY() / 75);
         int col = (int) (event.getX() / 75);
-        System.out.println("Clique sur la case: " + row + ", " + col);
-
         if(playerFX.myTurn){
-            System.out.println("my turn");
-
             pieceSelectedP = chessController.getBoard().getPiece(col,row);
-            if (pieceSelectedP.getType() != TypePiece.EMPTY && pieceSelectedP.isWhite() && playerFX.isWhite){
+            System.out.println(pieceSelectedP.getType());
+            System.out.println(pieceSelectedP.isWhite());
+            System.out.println(playerFX.isWhite);
+            if (pieceSelectedP.getType() != TypePiece.EMPTY && (pieceSelectedP.isWhite() == playerFX.isWhite)){
                 this.pieceSelected = true;
                 pieceSelectedP.findValidMove(chessController.getBoard());
                 List<Move> possibleMoves = this.chessController.selectPiece(col, row);
                 System.out.println(possibleMoves.size());
                 if (!possibleMoves.isEmpty()) {
+                    rowStart = row;
+                    colStart = col;
                     GraphicsContext gc = chessBoardCanvas.getGraphicsContext2D();
                     // mettre en vert les case possible
                     gc.setFill(Color.GREEN);
@@ -296,6 +312,7 @@ public class GameController {
                             }
                     );
                     gc.setGlobalAlpha(1);
+                    this.errorLabel.setText("");
                 } else {
                     this.errorLabel.setText("Aucun mouvement possible pour cette pièce");
                 }
@@ -312,20 +329,19 @@ public class GameController {
         GraphicsContext gc = chessBoardCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, 600, 600);
         drawChessBoard(gc);
-        this.pieceSelected = false;
         if( this.chessController.movePiece(new Move(pieceSelectedP.getX(), pieceSelectedP.getY(), col, row))){
-            this.pieceSelectedP = null;
             drawPieces(gc);
             this.updateMoveHistory();
             playerFX.myTurn = chessController.getCurrentPlayer().getName().equals(playerFX.getPseudo());
-            if (!playerFX.myTurn){
-                this.waitMyTurn();
-            }
             this.updateTurnLabel();
             return true;
         } else {
             this.errorLabel.setText("Mouvement invalide");
             drawPieces(gc);
+            this.pieceSelectedP = null;
+            this.pieceSelected = false;
+            rowStart = -1;
+            colStart = -1;
             return false;
         }
 
@@ -343,7 +359,42 @@ public class GameController {
                 this.chosePiece(event);
             }
             else{
-                this.choseMove(row , col);
+                if(this.choseMove(row , col)){
+                    this.errorLabel.setText("");
+                    try {
+                        if (pieceSelectedP.getType() == TypePiece.PAWN && Math.abs(rowStart - row) == 2){
+                            System.out.println("i do pawndash");
+                            System.out.println(Protocol.formatMovePiece(colStart,rowStart,col,row,true));
+                            clientSocket.sendMessage(Protocol.formatMovePiece(colStart,rowStart,col,row,true));
+                        } else {
+                            System.out.println("i dont pawndash");
+                            clientSocket.sendMessage(Protocol.formatMovePiece(colStart,rowStart,col,row));
+                        }
+                        this.pieceSelectedP = null;
+                        this.pieceSelected = false;
+                        rowStart = -1;
+                        colStart = -1;
+                        String response = clientSocket.receiveMessage(); // Attendre la réponse du serveur
+                        System.out.println("Réponse du serveur: " + response);
+                        if(response.equals("OK")){
+                            System.out.println("Move OK");
+                            System.out.println(playerFX.myTurn);
+                            if (!playerFX.myTurn){
+                                this.waitMyTurn();
+                            }
+                        }
+                        else{
+                            //TODO : bon deplacement client mais pas serveur donc undo move client et redemander le deplacement
+                        }
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
+
+
+                }
             }
 
         }
@@ -354,15 +405,26 @@ public class GameController {
     }
 
     private void updateTurnLabel() {
-        currentTurnLabel.setText(chessController.chessGame.getCurrentPlayer().getName()); // Remplacer par le nom du joueur actuel
+        Platform.runLater(() -> {
+            currentTurnLabel.setText(chessController.chessGame.getCurrentPlayer().getName());
+        });
     }
 
     private void updateMoveHistory() {
-        moveHistory.clear();
-        for (Move move : this.chessController.moveHistory) {
-            moveHistory.add(move.toString());
-        }
-        moveHistoryListView.setItems(moveHistory);
+        Platform.runLater(() -> {
+            moveHistory.clear();
+            for (Move move : this.chessController.getBoard().getMoveHistory()) {
+                moveHistory.add(move.toString());
+            }
+            moveHistoryListView.setItems(moveHistory);
+        });
+    }
+
+    private void refreshGame(){
+        GraphicsContext gc = chessBoardCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, 600, 600);
+        drawChessBoard(gc);
+        drawPieces(gc);
     }
 
     @FXML
@@ -372,17 +434,40 @@ public class GameController {
     }
 
     private void waitMyTurn(){
+        System.out.println("waitMyTurn");
          new Thread(() -> {
             try {
+                    //wait 0.5 seconde
+
                 String response = clientSocket.receiveMessage(); // Attendre la réponse du serveur
+                if(response.equals("START")){response = clientSocket.receiveMessage();}
+                System.out.println("wait");
                 System.out.println("Réponse du serveur: " + response);
-                if(response.equals("YOUR_TURN")){
-                    playerFX.myTurn = true;
+                if(response.equals("MOVE_ADDV")) {
+                    response = clientSocket.receiveMessage();
+                    String[] moveS = response.split(";");
+                    String pawnDash = (moveS.length == 5) ? moveS[4] : "false";
+                    System.out.println("received move");
+                    System.out.println(pawnDash);
+                    //print moveS
+                    for (String s : moveS) {
+                        System.out.println(s);
+                    }
+                    Move move = new Move(Integer.parseInt(moveS[0]), Integer.parseInt(moveS[1]), Integer.parseInt(moveS[2]), Integer.parseInt(moveS[3]), Boolean.parseBoolean(pawnDash));
+                    Piece piece = chessController.getBoard().getPiece(move.getStartX(), move.getStartY());
+                    piece.findValidMove(chessController.getBoard());
+                    this.chessController.movePiece(move);
+                    System.out.println(chessController.chessGame.getCurrentPlayer().getName());
+                    this.updateMoveHistory();
+                    this.refreshGame();
+                    playerFX.myTurn = chessController.getCurrentPlayer().getName().equals(playerFX.getPseudo());
+                    this.updateTurnLabel();
+                    initTurn();
                 }
-            } catch (IOException e) {
+         } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-         });
+         }).start();
     }
 }
 

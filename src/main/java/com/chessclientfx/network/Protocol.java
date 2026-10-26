@@ -26,5 +26,13 @@ public class Protocol {
         return String.format("%s;%s", JOIN_GAME, gameId);
     }
 
+    public static String formatMovePiece(int sourceX, int sourceY, int destX, int destY) {
+        return String.format("%s;%d;%d;%d;%d", MOVE_PIECE, sourceX, sourceY, destX, destY);
+    }
+
+    public static String formatMovePiece(int sourceX, int sourceY, int destX, int destY, boolean pawnDash) {
+        return String.format("%s;%d;%d;%d;%d;%b", MOVE_PIECE, sourceX, sourceY, destX, destY, pawnDash);
+    }
+
 
 }
