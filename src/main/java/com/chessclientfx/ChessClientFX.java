@@ -8,8 +8,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * Client JavaFX. Serveur : variables CHESS_HOST (localhost) et CHESS_TCP_PORT (8090),
- * ou arguments --host=… --port=…
+ * Client JavaFX. Serveur : variables CHESS_HOST (localhost), CHESS_TCP_PORT (8090) et
+ * CHESS_TLS (false), ou arguments --host=… --port=… --tls=true.
+ * Serveur public : --host=chessfx.calixteair.fr --port=443 --tls=true
  */
 public class ChessClientFX extends Application {
 
@@ -19,8 +20,9 @@ public class ChessClientFX extends Application {
     public void start(Stage stage) {
         String host = option("host", "CHESS_HOST", "localhost");
         String port = option("port", "CHESS_TCP_PORT", "8090");
+        boolean tls = Boolean.parseBoolean(option("tls", "CHESS_TLS", "false"));
         try {
-            connection = new ServerConnection(validHost(host), validPort(port));
+            connection = new ServerConnection(validHost(host), validPort(port), tls);
         } catch (IOException | IllegalArgumentException e) {
             Screens.fatal("Impossible de joindre le serveur " + host + ":" + port + ".\nLancez d'abord chessServer.");
             return;
