@@ -18,7 +18,7 @@ public class ConnectionController {
 
     private final ServerConnection connection;
     private final Screens screens;
-    private String requested;
+    private boolean requested;
 
     @FXML
     private TextField usernameField;
@@ -44,7 +44,7 @@ public class ConnectionController {
             errorLabel.setText("Pseudo : 1 à 20 caractères parmi lettres, chiffres, _ et -");
             return;
         }
-        requested = pseudo;
+        requested = true;
         connectButton.setDisable(true);
         connection.send(Protocol.connect(pseudo));
     }
@@ -52,7 +52,7 @@ public class ConnectionController {
     private void onMessage(ServerMessage message) {
         if (message.is(Protocol.WELCOME)) {
             screens.showHome(message.field(0));
-        } else if (message.is(Protocol.ERROR) && requested != null) {
+        } else if (message.is(Protocol.ERROR) && requested) {
             errorLabel.setText(message.errorText());
             connectButton.setDisable(false);
         }

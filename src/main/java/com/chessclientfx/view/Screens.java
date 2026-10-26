@@ -57,7 +57,12 @@ public final class Screens {
     }
 
     private void connectionLost() {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "La connexion au serveur a été perdue.");
+        fatal("La connexion au serveur a été perdue.");
+    }
+
+    /** Erreur bloquante : message puis fermeture de l'application. */
+    public static void fatal(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, message);
         alert.setHeaderText("Serveur injoignable");
         alert.showAndWait();
         Platform.exit();

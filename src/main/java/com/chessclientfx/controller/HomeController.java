@@ -64,9 +64,10 @@ public class HomeController {
                 handleJoinButton();
             }
         });
+        waitingBox.managedProperty().bind(waitingBox.visibleProperty());
         showWaiting(null);
+        // Le serveur pousse la liste des parties à l'arrivée dans le salon.
         connection.setListener(this::onMessage);
-        connection.send("LIST_GAMES");
     }
 
     private void onMessage(ServerMessage message) {
@@ -95,7 +96,6 @@ public class HomeController {
     private void showWaiting(String gameName) {
         boolean waiting = gameName != null;
         waitingBox.setVisible(waiting);
-        waitingBox.setManaged(waiting);
         lobbyBox.setDisable(waiting);
         if (waiting) {
             waitingLabel.setText("« " + gameName + " » attend un adversaire…");

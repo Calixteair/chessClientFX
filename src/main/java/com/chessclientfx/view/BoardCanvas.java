@@ -32,7 +32,7 @@ public class BoardCanvas extends Canvas {
     private static final Color CHECK = Color.web("#d93a2b");
     private static final Color FRAME = Color.web("#2a3242");
 
-    private final Map<Character, Image> images = loadImages();
+    private static final Map<Character, Image> IMAGES = loadImages();
     private boolean whiteAtBottom = true;
     private Position position = Position.fromFen("8/8/8/8/8/8/8/8 w - - 0 1");
     private String lastMove;
@@ -58,10 +58,13 @@ public class BoardCanvas extends Canvas {
         this.whiteAtBottom = whiteAtBottom;
     }
 
+    /** Nouvelle position : efface aussi la sélection. */
     public void show(Position position, String lastMove, String checkSquare) {
         this.position = position;
         this.lastMove = lastMove;
         this.checkSquare = checkSquare;
+        this.selected = null;
+        this.targets = Set.of();
         redraw();
     }
 
@@ -79,16 +82,24 @@ public class BoardCanvas extends Canvas {
     private String squareAt(double x, double y) {
         int col = (int) Math.min(7, Math.max(0, x / cell()));
         int row = (int) Math.min(7, Math.max(0, y / cell()));
-        int file = whiteAtBottom ? col : 7 - col;
-        int rank = whiteAtBottom ? 7 - row : row;
-        return Position.squareName(file, rank);
+        return Position.squareName(fileAt(col), rankAt(row));
+    }
+
+    /** Colonne / ligne d'affichage → file / rank (l'orientation est symétrique). */
+    private int fileAt(int col) {
+        return whiteAtBottom ? col : 7 - col;
+    }
+
+    private int rankAt(int row) {
+        return whiteAtBottom ? 7 - row : row;
     }
 
     public void redraw() {
         GraphicsContext g = getGraphicsContext2D();
-        for (int file = 0; file < 8; file++) {
-            for (int rank = 0; rank < 8; rank++) {
-                drawSquare(g, file, rank);
+        g.setFont(Font.font("System", FontWeight.BOLD, Math.max(9, cell() * 0.16)));
+        for (int col = 0; col < 8; col++) {
+            for (int row = 0; row < 8; row++) {
+                drawSquare(g, col, row);
             }
         }
         g.setStroke(FRAME);
@@ -96,11 +107,13 @@ public class BoardCanvas extends Canvas {
         g.strokeRect(1, 1, getWidth() - 2, getHeight() - 2);
     }
 
-    private void drawSquare(GraphicsContext g, int file, int rank) {
+    private void drawSquare(GraphicsContext g, int col, int row) {
+        int file = fileAt(col);
+        int rank = rankAt(row);
         String name = Position.squareName(file, rank);
         double c = cell();
-        double x = (whiteAtBottom ? file : 7 - file) * c;
-        double y = (whiteAtBottom ? 7 - rank : rank) * c;
+        double x = col * c;
+        double y = row * c;
         boolean dark = (file + rank) % 2 == 0;
         boolean last = lastMove != null && (lastMove.startsWith(name) || lastMove.substring(2, 4).equals(name));
 
@@ -115,8 +128,8 @@ public class BoardCanvas extends Canvas {
                     new Stop(0, CHECK), new Stop(0.45, CHECK.deriveColor(0, 1, 1, 0.55)), new Stop(1, Color.TRANSPARENT)));
             g.fillRect(x, y, c, c);
         }
-        drawCoordinates(g, file, rank, x, y, dark);
-        Image piece = images.get(position.at(file, rank));
+        drawCoordinates(g, col, row, x, y, dark);
+        Image piece = IMAGES.get(position.at(file, rank));
         if (piece != null) {
             g.drawImage(piece, x + c * 0.06, y + c * 0.06, c * 0.88, c * 0.88);
         }
@@ -137,17 +150,14 @@ public class BoardCanvas extends Canvas {
         }
     }
 
-    private void drawCoordinates(GraphicsContext g, int file, int rank, double x, double y, boolean dark) {
+    private void drawCoordinates(GraphicsContext g, int col, int row, double x, double y, boolean dark) {
         double c = cell();
-        int col = whiteAtBottom ? file : 7 - file;
-        int row = whiteAtBottom ? 7 - rank : rank;
         g.setFill(dark ? LIGHT : DARK);
-        g.setFont(Font.font("System", FontWeight.BOLD, Math.max(9, c * 0.16)));
         if (col == 0) {
-            g.fillText(String.valueOf(rank + 1), x + c * 0.06, y + c * 0.2);
+            g.fillText(String.valueOf(rankAt(row) + 1), x + c * 0.06, y + c * 0.2);
         }
         if (row == 7) {
-            g.fillText(String.valueOf((char) ('a' + file)), x + c * 0.82, y + c * 0.94);
+            g.fillText(String.valueOf((char) ('a' + fileAt(col))), x + c * 0.82, y + c * 0.94);
         }
     }
 

@@ -19,6 +19,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,8 +33,15 @@ import java.util.stream.Collectors;
 public class GameController {
 
     private static final double BOARD_SIZE = 560;
-    private static final Map<String, String> PROMOTIONS = Map.of(
-            "Dame", "q", "Tour", "r", "Fou", "b", "Cavalier", "n");
+    /** Libellé affiché → lettre UCI, dans l'ordre du choix proposé. */
+    private static final Map<String, String> PROMOTIONS = new LinkedHashMap<>();
+
+    static {
+        PROMOTIONS.put("Dame", "q");
+        PROMOTIONS.put("Cavalier", "n");
+        PROMOTIONS.put("Tour", "r");
+        PROMOTIONS.put("Fou", "b");
+    }
 
     private final ServerConnection connection;
     private final Screens screens;
@@ -77,8 +85,9 @@ public class GameController {
         board.setWhiteAtBottom(info.iAmWhite());
         board.setOnSquareClicked(this::onSquareClicked);
         boardHolder.getChildren().add(board);
+        resignButton.managedProperty().bind(resignButton.visibleProperty());
+        backButton.managedProperty().bind(backButton.visibleProperty());
         backButton.setVisible(false);
-        backButton.setManaged(false);
         connection.setListener(this::onMessage);
     }
 
@@ -103,7 +112,6 @@ public class GameController {
         selected = null;
         Position position = Position.fromFen(next.fen());
         String check = next.check() ? position.kingSquare(next.whiteToMove()) : null;
-        board.select(null, Set.of());
         board.show(position, next.lastMove(), check);
         historyList.getItems().setAll(historyRows(next.history()));
         historyList.scrollTo(historyList.getItems().size() - 1);
@@ -113,9 +121,7 @@ public class GameController {
     private void updateStatus() {
         boolean over = state.isOver();
         resignButton.setVisible(!over);
-        resignButton.setManaged(!over);
         backButton.setVisible(over);
-        backButton.setManaged(over);
         statusLabel.getStyleClass().remove("check");
         if (over) {
             statusLabel.setText("Partie terminée");
@@ -182,7 +188,7 @@ public class GameController {
     }
 
     private Optional<String> askPromotion(String fromTo) {
-        ChoiceDialog<String> dialog = new ChoiceDialog<>("Dame", List.of("Dame", "Cavalier", "Tour", "Fou"));
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Dame", PROMOTIONS.keySet());
         dialog.setTitle("Promotion");
         dialog.setHeaderText("Votre pion arrive sur la dernière rangée.");
         dialog.setContentText("Promouvoir en :");

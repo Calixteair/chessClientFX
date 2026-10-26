@@ -3,8 +3,6 @@ package com.chessclientfx;
 import com.chessclientfx.network.ServerConnection;
 import com.chessclientfx.view.Screens;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -24,11 +22,7 @@ public class ChessClientFX extends Application {
         try {
             connection = new ServerConnection(validHost(host), validPort(port));
         } catch (IOException | IllegalArgumentException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR,
-                    "Impossible de joindre le serveur " + host + ":" + port + ".\nLancez d'abord chessServer.");
-            alert.setHeaderText("Serveur injoignable");
-            alert.showAndWait();
-            Platform.exit();
+            Screens.fatal("Impossible de joindre le serveur " + host + ":" + port + ".\nLancez d'abord chessServer.");
             return;
         }
         stage.setMinWidth(760);
