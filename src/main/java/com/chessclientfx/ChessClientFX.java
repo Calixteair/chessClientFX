@@ -22,8 +22,8 @@ public class ChessClientFX extends Application {
         String host = option("host", "CHESS_HOST", "localhost");
         String port = option("port", "CHESS_TCP_PORT", "8090");
         try {
-            connection = new ServerConnection(host, Integer.parseInt(port));
-        } catch (IOException | NumberFormatException e) {
+            connection = new ServerConnection(validHost(host), validPort(port));
+        } catch (IOException | IllegalArgumentException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR,
                     "Impossible de joindre le serveur " + host + ":" + port + ".\nLancez d'abord chessServer.");
             alert.setHeaderText("Serveur injoignable");
@@ -35,6 +35,22 @@ public class ChessClientFX extends Application {
         stage.setMinHeight(640);
         new Screens(stage, connection).showConnection();
         stage.show();
+    }
+
+    /** Nom d'hôte ou adresse IP, rien d'autre (pas d'URL, pas d'espace). */
+    private static String validHost(String host) {
+        if (!host.matches("[A-Za-z0-9.:\\[\\]-]{1,253}")) {
+            throw new IllegalArgumentException("Hôte invalide : " + host);
+        }
+        return host;
+    }
+
+    private static int validPort(String port) {
+        int value = Integer.parseInt(port);
+        if (value < 1 || value > 65535) {
+            throw new IllegalArgumentException("Port invalide : " + port);
+        }
+        return value;
     }
 
     private String option(String name, String envVariable, String fallback) {
