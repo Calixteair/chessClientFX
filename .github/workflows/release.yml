@@ -1,0 +1,67 @@
+# Publie une Release GitHub à chaque tag v* (ex. v1.0.0) : une version autonome du client
+# (Java + JavaFX embarqués, rien à installer) pour Linux, Windows et macOS (Intel et Apple Silicon).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Version
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || v=1.0.0
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      - name: Package
+        shell: bash
+        run: packaging/package.sh "$VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: echecs-${{ matrix.os }}
+          path: target/release/*
+          if-no-files-found: error
+
+  release:
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body: |
+            Client JavaFX du jeu d'échecs, prêt à lancer : Java est inclus, rien à installer.
+            Il se connecte au serveur public (chessfx.calixteair.fr). On peut aussi jouer depuis le navigateur sur https://chess.calixteair.fr.
+
+            | Système | Fichier | Lancement |
+            | --- | --- | --- |
+            | Linux | `Echecs-*-linux-x64.tar.gz` | extraire puis `Echecs/bin/Echecs` |
+            | Windows | `Echecs-*-windows-x64.zip` | extraire puis `Echecs\Echecs.exe` |
+            | macOS Apple Silicon | `Echecs-*-macos-arm64.zip` | extraire puis ouvrir `Echecs.app` |
+            | macOS Intel | `Echecs-*-macos-x64.zip` | extraire puis ouvrir `Echecs.app` |
+
+            L'application n'est pas signée : Windows SmartScreen demande « Informations complémentaires → Exécuter quand même », macOS demande un clic droit → « Ouvrir » au premier lancement.

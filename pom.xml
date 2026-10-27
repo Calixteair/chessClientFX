@@ -52,7 +52,13 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.chessclientfx.ChessClientFX</mainClass>
+                    <mainClass>com.chessclientfx/com.chessclientfx.ChessClientFX</mainClass>
+                    <!-- mvn javafx:jlink : runtime Java minimal pour les versions téléchargeables -->
+                    <jlinkImageName>runtime</jlinkImageName>
+                    <stripDebug>true</stripDebug>
+                    <noHeaderFiles>true</noHeaderFiles>
+                    <noManPages>true</noManPages>
+                    <compress>2</compress>
                 </configuration>
             </plugin>
         </plugins>
